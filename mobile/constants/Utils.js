@@ -1,1 +1,1 @@
-export const apiUrl = 'https://nwnx9ywxnj.sse.codesandbox.io';
+export const apiUrl = 'https://cryptic-brushlands-53893.herokuapp.com';

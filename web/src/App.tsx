@@ -3,7 +3,7 @@ import * as axios from 'axios';
 
 import { FormsApp } from './components/FormsApp';
 
-const apiUrl = 'http://localhost:4000';
+const apiUrl = 'https://cryptic-brushlands-53893.herokuapp.com';
 
 export type FieldTypes =
   | 'text'
