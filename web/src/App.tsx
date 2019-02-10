@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import * as axios from 'axios';
+import uuidv1 from 'uuid/v1';
 
 import { FormsApp } from './components/FormsApp';
 
@@ -13,27 +14,38 @@ export type FieldTypes =
   | 'email'
   | 'textArea';
 
+export type Choice = { value: string; label: string };
+
 export type Field = {
+  id: string;
   name: string;
   type: FieldTypes;
-  choices?: { value: string; label: string }[];
+  choices: Choice[];
 };
 
 export const fieldTypes: Array<{ id: FieldTypes; label: string }> = [
-  { id: 'text', label: 'text' },
-  { id: 'number', label: 'number' },
+  { id: 'text', label: 'text simple' },
+  { id: 'number', label: 'numero' },
   { id: 'email', label: 'email' },
-  { id: 'multipleChoice', label: 'multiple choice' },
-  { id: 'singleChoice', label: 'single choice' },
-  { id: 'textArea', label: 'text area' }
+  { id: 'multipleChoice', label: 'choix multiple' },
+  { id: 'singleChoice', label: 'un seul choix' },
+  { id: 'textArea', label: 'champ de text' }
 ];
+
+type IForm = {
+  fields: Field[];
+  name: string;
+  id: string;
+};
 
 type State = {
   fields: Field[];
   name: string;
-  showFieldForm: boolean;
   fieldToAdd: Field;
-  displayAddedForm: boolean;
+  fieldChoice: Choice;
+  forms: IForm[];
+  isLoading: boolean;
+  error: any;
 };
 
 type Props = {};
@@ -45,13 +57,19 @@ class App extends Component<Props, State> {
     this.state = {
       fields: [],
       name: '',
-      showFieldForm: false,
       fieldToAdd: {
+        id: uuidv1(),
         name: '',
         type: 'text',
         choices: []
       },
-      displayAddedForm: false
+      fieldChoice: {
+        label: '',
+        value: ''
+      },
+      forms: [],
+      isLoading: false,
+      error: null
     };
   }
 
@@ -81,20 +99,68 @@ class App extends Component<Props, State> {
     }));
   };
 
-  showFieldForm = () => {
-    this.setState({ showFieldForm: true });
+  setFieldChoiceLabel = (e: React.FormEvent<HTMLInputElement>) => {
+    const label = e.currentTarget.value;
+    this.setState((state) => ({
+      ...state,
+      fieldChoice: {
+        ...state.fieldChoice,
+        label
+      }
+    }));
+  };
+
+  setFieldChoiceValue = (e: React.FormEvent<HTMLInputElement>) => {
+    const value = e.currentTarget.value;
+    this.setState((state) => ({
+      ...state,
+      fieldChoice: {
+        ...state.fieldChoice,
+        value
+      }
+    }));
+  };
+
+  addFieldChoices = () => {
+    if (!this.state.fieldChoice.value || !this.state.fieldChoice.label) return;
+
+    this.setState((state) => ({
+      ...state,
+      fieldToAdd: {
+        ...state.fieldToAdd,
+        choices: [...state.fieldToAdd.choices, state.fieldChoice]
+      },
+      fieldChoice: {
+        label: '',
+        value: ''
+      }
+    }));
   };
 
   addField = () => {
+    if (!this.state.fieldToAdd.name) return;
+
     this.setState((state) => ({
       ...state,
       fields: [...state.fields, state.fieldToAdd],
-      fieldToAdd: { name: '', type: 'text' },
-      showFieldForm: false
+      fieldToAdd: {
+        id: uuidv1(),
+        name: '',
+        type: 'text',
+        choices: []
+      }
+    }));
+  };
+
+  removeField = (fieldName: string) => {
+    this.setState((state) => ({
+      ...state,
+      fields: state.fields.filter((f) => f.id !== fieldName)
     }));
   };
 
   saveForm = () => {
+    this.setState({ isLoading: true, error: null });
     axios.default
       .post(`${apiUrl}/forms`, {
         name: this.state.name,
@@ -102,13 +168,46 @@ class App extends Component<Props, State> {
       })
       .then(
         (res) => {
-          console.log(res);
+          this.setState((state) => ({
+            fields: [],
+            name: '',
+            fieldToAdd: {
+              id: uuidv1(),
+              name: '',
+              type: 'text',
+              choices: []
+            },
+            fieldChoice: {
+              label: '',
+              value: ''
+            },
+            forms: [...state.forms, res.data],
+            isLoading: false
+          }));
         },
         (e) => {
           console.log(e);
+          this.setState({ isLoading: false, error: e });
         }
       );
   };
+
+  getForms = () => {
+    this.setState({ isLoading: true, error: null });
+    axios.default.get(`${apiUrl}/forms`).then(
+      (res) => {
+        this.setState({ forms: res.data, isLoading: false });
+      },
+      (e) => {
+        console.error(e);
+        this.setState({ isLoading: false, error: e });
+      }
+    );
+  };
+
+  componentDidMount() {
+    this.getForms();
+  }
 
   render() {
     return (
@@ -116,13 +215,18 @@ class App extends Component<Props, State> {
         name={this.state.name}
         setFormName={this.setFormName}
         fields={this.state.fields}
-        showFieldForm={this.state.showFieldForm}
         fieldToAdd={this.state.fieldToAdd}
         setFieldName={this.setFieldName}
         setFieldType={this.setFieldType}
-        showFieldFormFn={this.showFieldForm}
         addField={this.addField}
+        removeField={this.removeField}
         saveForm={this.saveForm}
+        isLoading={this.state.isLoading}
+        fieldChoice={this.state.fieldChoice}
+        setFieldChoiceLabel={this.setFieldChoiceLabel}
+        setFieldChoiceValue={this.setFieldChoiceValue}
+        addFieldChoices={this.addFieldChoices}
+        error={this.state.error}
       />
     );
   }
