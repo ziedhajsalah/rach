@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Text, Icon, Card } from 'react-native-elements';
 
 import { apiUrl } from '../constants/Utils';
@@ -31,40 +31,41 @@ export default class HomeScreen extends React.Component {
 
   render() {
     return (
-      <ScrollView contentContainerStyle={styles.container}>
-        {!this.state.isLoading && (
-          <Button
-            icon={<Icon name="loop" size={36} />}
-            onPress={() => {
-              this.fetchForms();
-            }}
-          />
-        )}
-        {this.state.isLoading && <Icon name="cloud" size={72} />}
-        {this.state.error && !this.state.isLoading && (
-          <Text>{JSON.stringify(this.state.error, null, 2)}</Text>
-        )}
-        {this.state.forms.map((form) => (
-          <Button
-            key={form.id}
-            containerStyle={styles.forms}
-            onPress={() => {
-              this.props.navigation.navigate('Links', { form });
-            }}
-            title={form.name}
-          />
-        ))}
-      </ScrollView>
+        <ScrollView contentContainerStyle={styles.container}>
+          {!this.state.isLoading && (
+            <Button
+              icon={<Icon name="loop" size={36} />}
+              onPress={() => {
+                this.fetchForms();
+              }}
+            />
+          )}
+          {this.state.isLoading && <Icon name="cloud" size={72} />}
+          {this.state.error && !this.state.isLoading && (
+            <Text>{JSON.stringify(this.state.error, null, 2)}</Text>
+          )}
+          {this.state.forms.map((form) => (
+            <Button
+              key={form.id}
+              containerStyle={styles.forms}
+              onPress={() => {
+                this.props.navigation.navigate('Links', { form });
+              }}
+              title={form.name}
+            />
+          ))}
+        </ScrollView>
     );
   }
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff'
+    backgroundColor: '#fff',
+    paddingVertical: 20
   },
   forms: {
     width: '100%',
